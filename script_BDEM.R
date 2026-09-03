@@ -15,9 +15,12 @@
 
 # Tarefa 1. Leitura do banco de dados SIM_2016 com 1309774 linhas e 87 colunas com o nome de dados_sim
 # Verificar se a leitura foi feita corretamente e a estrutura dos dados
-
-
-# Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - SIM - tarefa 1" e envie para o repositório Projeto_BDEM_2016
+dados_sim = read.csv("SIM_2016.csv", sep = ";")
+View(dados_sim)
+names(dados_sim)
+str(dados_sim)
+dim(dados_sim)
+# Ao terminar a Tarefa 1 commit com a mensagem "" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 2. Reduzir dados_sim apenas para as colunas que serão utilizadas, nomeando este novo banco de dados como dados_sim_1
