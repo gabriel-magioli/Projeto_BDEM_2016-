@@ -98,6 +98,98 @@ dados_sim_2$TPMORTEOCO = factor(dados_sim_2$TPMORTEOCO, levels = c(1,2,3,4,5,8),
 # Tarefa 7. Criar um banco de dados, de nome SIM_UF.csv (Exemplo: SIM_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 7 - SIM.pdf”
 # Atenção: a ordem das variáveis do arquivo deve ser respeitada
 
+variaveis_tarefas7 <- c("ANO", "NIVEL", "CODMUNRES", "TO", "TORC", "TORCR", "TO_NN", "TO_N",
+                        "TO_CB_I", "TO_CB_N", "TO_CB_C", "TO_CB_R", "TO_CB_O", "TO_M", "TO_F", 
+                        "TO_F_IF", "TO_FT", "TO_NT", "TO_NT_P", "TO_NT_T", "TO_PNT", "TONT_B",
+                        "TONT_PT", "TONT_A", "TONT_PD", "TONT_I", "TO_MT", "TO_MT_DG", "TO_MT_PT",
+                        "TO_MT_AB", "TO_MT_42", "TO_MT_43", "TO_MT_P", "TO_MT_P_I", "TO_MT_P_ES",
+                        "TO_MT_P_EFI", "TO_MT_P_EFII", "TO_MT_P_EM", "TO_MT_P_ESI", "TO_MT_P_ESC")
+
+
+SIM_CE <- SIM_CE[, variaveis_tarefas7]
+library(dplyr)
+library(stringr)
+
+dados_sim_2 <- dados_sim_2 %>%
+  mutate(
+    IDADE_NUM = as.numeric(as.character(IDADE)),
+    IDADE_EM_DIAS = case_when(
+      IDADE_NUM < 400 ~ suppressWarnings(as.numeric(str_sub(IDADE, 2, 3))), # Se menor que 400, são dias/meses/horas
+      IDADE_NUM >= 400 & IDADE_NUM < 500 ~ (IDADE_NUM - 400) * 365,
+      TRUE ~ NA_real_
+    ),
+    IDADE_EM_ANOS = case_when(
+      IDADE_NUM >= 400 & IDADE_NUM < 500 ~ IDADE_NUM - 400,
+      IDADE_NUM < 400 ~ 0,
+      TRUE ~ NA_real_
+    )
+  )
+
+SIM_CE <- dados_sim_2 %>%
+  group_by(CODMUNRES) %>%
+  summarise(
+    ANO = 2016,
+    NIVEL = "MUNICIPIO",
+    CODMUNRES = first(CODMUNRES),
+    
+    # Informações Gerais
+    TO = n(),
+    TORC = sum(complete.cases(.)),
+    # TORCR: soma os registros sem NA considerando apenas as colunas que você filtrou no dados_sim_2
+    TORCR = sum(complete.cases(pick(everything()))),
+    
+    TO_NN = sum(str_detect(CAUSABAS, "^[V-Y]"), na.rm = TRUE),
+    TO_N = sum(!str_detect(CAUSABAS, "^[V-Y]"), na.rm = TRUE),
+    TO_CB_I = sum(str_detect(CAUSABAS, "^[A-B]"), na.rm = TRUE),
+    TO_CB_N = sum(str_detect(CAUSABAS, "^[C]|^(D[0-4][0-8])|^(D[5-8][0-9])"), na.rm = TRUE),
+    TO_CB_C = sum(str_detect(CAUSABAS, "^I"), na.rm = TRUE),
+    TO_CB_R = sum(str_detect(CAUSABAS, "^J"), na.rm = TRUE),
+    TO_CB_O = TO_N - (TO_CB_I + TO_CB_N + TO_CB_C + TO_CB_R),
+    
+    TO_M = sum(SEXO == "Masculino", na.rm = TRUE),
+    TO_F = sum(SEXO == "Feminino", na.rm = TRUE),
+    TO_F_IF = sum(SEXO == "Feminino" & IDADE_EM_ANOS >= 15 & IDADE_EM_ANOS <= 49, na.rm = TRUE),
+    
+    # Informações fetais e neonatais
+    TO_FT = sum(TIPOBITO == "Fetal", na.rm = TRUE),
+    TO_NT = sum(IDADE_EM_DIAS >= 0 & IDADE_EM_DIAS <= 27, na.rm = TRUE),
+    TO_NT_P = sum(IDADE_EM_DIAS >= 0 & IDADE_EM_DIAS <= 6, na.rm = TRUE),
+    TO_NT_T = sum(IDADE_EM_DIAS >= 7 & IDADE_EM_DIAS <= 27, na.rm = TRUE),
+    TO_PNT = sum(IDADE_EM_DIAS >= 28 & IDADE_EM_DIAS <= 364, na.rm = TRUE),
+    
+    TONT_B = sum(IDADE_EM_DIAS >= 0 & IDADE_EM_DIAS <= 27 & RACACOR == "Branca", na.rm = TRUE),
+    TONT_PT = sum(IDADE_EM_DIAS >= 0 & IDADE_EM_DIAS <= 27 & RACACOR == "Preta", na.rm = TRUE),
+    TONT_A = sum(IDADE_EM_DIAS >= 0 & IDADE_EM_DIAS <= 27 & RACACOR == "Amarela", na.rm = TRUE),
+    TONT_PD = sum(IDADE_EM_DIAS >= 0 & IDADE_EM_DIAS <= 27 & RACACOR == "Parda", na.rm = TRUE),
+    TONT_I = sum(IDADE_EM_DIAS >= 0 & IDADE_EM_DIAS <= 27 & RACACOR == "Indígena", na.rm = TRUE),
+    
+    # Informações maternas
+    TO_MT = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", 
+                                  "Até 42 dias após o término do parto", 
+                                  "De 43 dias a 1 ano após o término da gestação"), na.rm = TRUE),
+    TO_MT_DG = sum(TPMORTEOCO == "Na gravidez", na.rm = TRUE),
+    TO_MT_PT = sum(TPMORTEOCO == "No parto", na.rm = TRUE),
+    TO_MT_AB = sum(TPMORTEOCO == "No abortamento", na.rm = TRUE),
+    TO_MT_42 = sum(TPMORTEOCO == "Até 42 dias após o término do parto", na.rm = TRUE),
+    TO_MT_43 = sum(TPMORTEOCO == "De 43 dias a 1 ano após o término da gestação", na.rm = TRUE),
+    
+    TO_MT_P = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", 
+                                    "Até 42 dias após o término do parto"), na.rm = TRUE),
+    
+    TO_MT_P_I = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", 
+                                      "Até 42 dias após o término do parto") & 
+                      SEXO == "Feminino" & IDADE_EM_ANOS >= 15 & IDADE_EM_ANOS <= 49, na.rm = TRUE),
+    
+    TO_MT_P_ES = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", "Até 42 dias após o término do parto") & ESC2010 == "Sem escolaridade", na.rm = TRUE),
+    TO_MT_P_EFI = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", "Até 42 dias após o término do parto") & ESC2010 == "Fundamental I", na.rm = TRUE),
+    TO_MT_P_EFII = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", "Até 42 dias após o término do parto") & ESC2010 == "Fundamental II", na.rm = TRUE),
+    TO_MT_P_EM = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", "Até 42 dias após o término do parto") & ESC2010 == "Médio", na.rm = TRUE),
+    TO_MT_P_ESI = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", "Até 42 dias após o término do parto") & ESC2010 == "Superior incompleto", na.rm = TRUE),
+    TO_MT_P_ESC = sum(TPMORTEOCO %in% c("Na gravidez", "No parto", "No abortamento", "Até 42 dias após o término do parto") & ESC2010 == "Superior completo", na.rm = TRUE)
+  ) %>%
+  ungroup()
+SIM_CE <- SIM_CE[, variaveis_tarefas7]
+View(SIM)
 
 # Ao terminar a Tarefa 7 commit com a mensagem "script BDEM - SIM - tarefas 1 a 7" e envie para o repositório Projeto_BDEM_2016
 
