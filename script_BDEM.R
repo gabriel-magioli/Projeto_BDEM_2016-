@@ -278,7 +278,24 @@ summary(as.numeric(dados_sinasc_2$PESO))
 # Verifique o dicionário do SINASC para identificar qual o código das categorias de cada variável
 # KOTELCHUCK = 9 significa "Não informado"   TPROBSON = 11 significa "Não classificado por falta de informação"
 # Em variáveis quantitativas como IDADEMAE verificar se existem valores como 9999 para NA
-
+# Tarefa 5. Atribuir NA para categorias de "Não informado ou Ignorado" na tabela dados_sinasc_2
+dados_sinasc_2$LOCNASC[dados_sinasc_2$LOCNASC %in% c("9", 9)] = NA
+dados_sinasc_2$ESTCIVMAE[dados_sinasc_2$ESTCIVMAE %in% c("9", 9)] = NA
+dados_sinasc_2$GESTACAO[dados_sinasc_2$GESTACAO %in% c("9", 9)] = NA
+dados_sinasc_2$GRAVIDEZ[dados_sinasc_2$GRAVIDEZ %in% c("9", 9)] = NA
+dados_sinasc_2$PARTO[dados_sinasc_2$PARTO %in% c("9", 9)] = NA
+dados_sinasc_2$SEXO[dados_sinasc_2$SEXO %in% c("0", "9", 0, 9)] = NA
+dados_sinasc_2$RACACOR[dados_sinasc_2$RACACOR %in% c("9", 9)] = NA
+dados_sinasc_2$IDANOMAL[dados_sinasc_2$IDANOMAL %in% c("9", 9)] = NA
+dados_sinasc_2$ESCMAE2010[dados_sinasc_2$ESCMAE2010 %in% c("9", 9)] = NA
+dados_sinasc_2$RACACORMAE[dados_sinasc_2$RACACORMAE %in% c("9", 9)] = NA
+dados_sinasc_2$TPAPRESENT[dados_sinasc_2$TPAPRESENT %in% c("9", 9)] = NA
+dados_sinasc_2$TPROBSON[dados_sinasc_2$TPROBSON %in% c("11", "99", 11, 99)] = NA
+dados_sinasc_2$KOTELCHUCK[dados_sinasc_2$KOTELCHUCK %in% c("9", 9)] = NA
+dados_sinasc_2$IDADEMAE[dados_sinasc_2$IDADEMAE %in% c("99", "9999", 99, 9999)] = NA
+dados_sinasc_2$SEMAGESTAC[dados_sinasc_2$SEMAGESTAC %in% c("99", "9999", 99, 9999)] = NA
+dados_sinasc_2$APGAR5[dados_sinasc_2$APGAR5 %in% c("99", 99)] = NA
+dados_sinasc_2$PESO[dados_sinasc_2$PESO %in% c("9999", 9999)] = NA
 
 # Ao terminar a Tarefa 5 commit com a mensagem "script BDEM - SINASC - tarefas 1 a 5" e envie para o repositório Projeto_BDEM_2016
 
