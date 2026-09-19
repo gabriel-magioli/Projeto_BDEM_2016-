@@ -251,7 +251,24 @@ dim(dados_sinasc_2)
 # Tarefa 4. Verificar em dados_sinasc_2 a frequência das categorias das seguintes variáveis: LOCNASC, ESTCIVMAE, GESTACAO, GRAVIDEZ, PARTO,
 # SEXO, RACACOR, IDANOMAL, ESCMAE2010, RACACORMAE, TPAPRESENT, TPROBSON, PARIDADE, KOTELCHUCK
 # Avalie também os valores das variáveis quantitativas de IDADEMAE, SEMAGESTAC, APGAR5 e PESO
-
+table(dados_sinasc_2$L, useNA = "always")
+table(dados_sinasc_2$ESTCIVMAE, useNA = "always")
+table(dados_sinasc_2$GESTACAO, useNA = "always")
+table(dados_sinasc_2$GRAVIDEZ, useNA = "always")
+table(dados_sinasc_2$PARTO, useNA = "always")
+table(dados_sinasc_2$SEXO, useNA = "always")
+table(dados_sinasc_2$RACACOR, useNA = "always")
+table(dados_sinasc_2$IDANOMAL, useNA = "always")
+table(dados_sinasc_2$ESCMAE2010, useNA = "always")
+table(dados_sinasc_2$RACACORMAE, useNA = "always")
+table(dados_sinasc_2$TPAPRESENT, useNA = "always")
+table(dados_sinasc_2$TPROBSON, useNA = "always")
+table(dados_sinasc_2$PARIDADE, useNA = "always")
+table(dados_sinasc_2$KOTELCHUCK, useNA = "always")
+summary(as.numeric(dados_sinasc_2$IDADEMAE))
+summary(as.numeric(dados_sinasc_2$SEMAGESTAC))
+summary(as.numeric(dados_sinasc_2$APGAR5))
+summary(as.numeric(dados_sinasc_2$PESO))
 
 # Ao terminar a Tarefa 4 commit com a mensagem "script BDEM - SINASC - tarefas 1 a 4" e envie para o repositório Projeto_BDEM_2016
 
