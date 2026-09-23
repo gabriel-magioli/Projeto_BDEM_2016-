@@ -366,8 +366,10 @@ dados_sinasc_2$F_PIG = factor(dados_sinasc_2$F_PIG, levels=c("PIG","AIG","GIG"))
 
 # Tarefa 9. Criar um banco de dados, de nome SINASC_UF.csv (Exemplo: SINASC_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 9 - SINASC.pdf”
 # Atenção: a ordem das variáveis do arquivo deve ser respeitada
-
-
+colunas_tarefas9 = c("CODMUNNASC","LOCNASC","IDADEMAE","ESTCIVMAE","CODMUNRES","GESTACAO","GRAVIDEZ","PARTO","SEXO","APGAR5","RACACOR","PESO","IDANOMAL","ESCMAE2010"
+,"RACACORMAE","TPAPRESENT","TPROBSON","PARIDADE","KOTELCHUCK","CONTADOR","F_PESO","F_IDADE","F_APGAR5","PEREG","ESTCIV","PESO_P10","PESO_P90","F_PIG")
+dados_sinasc_CE = dados_sinasc_2[, colunas_tarefas9]
+write.table(dados_sinasc_CE, file = "SINASC_CE.csv",sep =";", row.names = FALSE)
 # Ao terminar a Tarefa 9 commit com a mensagem "script BDEM - SINASC - tarefas 1 a 9" e envie para o repositório Projeto_BDEM_2016
 
 
