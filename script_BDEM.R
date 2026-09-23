@@ -349,8 +349,18 @@ dados_sinasc_2$ESTCIV = factor(dados_sinasc_2$ESTCIV, levels = c("Sem companheir
 # Criar nova variável referente ao peso, de acordo com a idade gestacional, conforme indicado abaixo
 # nova variável apenas para casos de GRAVIDEZ Única: dados_sinasc_2$F_PIG: PIG: PESO < PESO_P10, AIG: PESO_P10 <= PESO <= PESO_P90, GIG: PESO > PESO_P90
 # Atenção para casos de NA em SEMAGESTAC, PESO ou SEXO. Lembre-se também que em dados_sinasc_2 SEXO está como fator com as categorias Feminino e Masculino.
-
-
+Tabela_PIG_Brasil = read.csv("Tabela_PIG_Brasil.csv",sep = ";")
+View(Tabela_PIG_Brasil)
+dados_sinasc_2$SEMAGESTAC = as.numeric(as.character(dados_sinasc_2$SEMAGESTAC))
+dados_sinasc_2$SEXO = as.character(dados_sinasc_2$SEXO)
+dados_sinasc_2 = merge(dados_sinasc_2,Tabela_PIG_Brasil[, c("SEMAGESTAC","SEXO", "PESO_P10", "PESO_P90")],
+by = c("SEMAGESTAC","SEXO"), all.x = TRUE)
+dados_sinasc_2$SEXO = factor(dados_sinasc_2$SEXO, levels = c("Masculino", "Feminino"))
+dados_sinasc_2$F_PIG = NA
+dados_sinasc_2$F_PIG[dados_sinasc_2$GRAVIDEZ == "Única" & dados_sinasc_2$PESO < dados_sinasc_2$PESO_P10] = "PIG"
+dados_sinasc_2$F_PIG[dados_sinasc_2$GRAVIDEZ == "Única" & dados_sinasc_2$PESO >= dados_sinasc_2$PESO_P10 & dados_sinasc_2$PESO <= dados_sinasc_2$PESO_P90] = "AIG"
+dados_sinasc_2$F_PIG[dados_sinasc_2$GRAVIDEZ == "Única" & dados_sinasc_2$PESO > dados_sinasc_2$PESO_P90] = "GIG"
+dados_sinasc_2$F_PIG = factor(dados_sinasc_2$F_PIG, levels=c("PIG","AIG","GIG"))
 # Ao terminar a Tarefa 8 commit com a mensagem "script BDEM - SINASC - tarefas 1 a 8" e envie para o repositório Projeto_BDEM_2016
 
 
