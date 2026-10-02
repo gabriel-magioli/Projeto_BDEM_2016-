@@ -499,7 +499,7 @@ SIDRA_CE = bind_rows(SIDRA_CE_UF, SIDRA_CE_MUN) %>%
 
 # Tarefa 5:Exportar o banco de dados com o nome SIDRA_UF.csv (Exemplo: SIDRA_RJ.csv)
 # Ao terminar a Tarefa 5 commit com o comentário "dados SIDRA_UF 2016 e script - SIDRA - tarefas 1 a 5"  e envie para o repositório Projeto_BDEM_2016
-
+write.table(SIDRA_CE, file = "SIDRA_CE.csv",sep =";", row.names = FALSE)
 
 ####################################
 # ETAPA 4: BANCOS DE DADOS DO ATLAS
