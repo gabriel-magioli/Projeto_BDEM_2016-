@@ -446,6 +446,53 @@ head(sidra_4)
 
 
 # Tarefa 4: Criar um banco de dados, de nome SIDRA_UF.csv (Exemplo: SIDRA_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 4 - SIDRA.pdf”
+library(dplyr)
+df_1 = sidra_1 %>%
+  select(CODMUNRES, POPRE_T) %>%
+  mutate(POPRE_T = as.numeric(POPRE_T))
+
+df_2 = sidra_2 %>%
+  select(CODMUNRES, POPRC_T, POPRC_M, POPRC_F) %>%
+  mutate(POPRC_T = as.numeric(POPRC_T),
+         POPRC_M = as.numeric(POPRC_M),    
+         POPRC_F = as.numeric(POPRC_F)
+)
+df_4 = sidra_4 %>%
+  mutate(
+  POP = as.numeric(POP),
+  POPF = as.numeric(POPF)
+  ) %>%
+  group_by(CODMUNRES) %>%
+  summarise(
+    POPRC_15 = sum(POP[F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos")], na.rm = TRUE),
+    POPRC_15_49 = sum(POP[F_IDADE %in% c("15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE),
+    POPRC_50 = sum(POP[!F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos","15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE),
+    POPRC_F_15 = sum(POPF[F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos")], na.rm = TRUE ),
+    POPRC_F_15_49 = sum(POPF[F_IDADE %in% c("15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE),
+    POPRC_F_50 = sum(POPF[!F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos","15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE)
+)
+SIDRA_CE_MUN = df_1 %>%
+  left_join(df_2, by = "CODMUNRES") %>%
+  left_join(df_4, by = "CODMUNRES") %>%
+  mutate(
+    ANO = 2016,
+    NIVEL = "MUNICIPIO"
+  )
+SIDRA_CE_UF = SIDRA_CE_MUN %>%
+  summarise(
+    across(c(POPRE_T,POPRC_T,POPRC_M,POPRC_F,POPRC_15,
+    POPRC_15_49,POPRC_50,POPRC_F_15,POPRC_F_15_49,POPRC_F_50),
+    ~ sum(.x,na.rm=TRUE))
+  ) %>%
+  mutate(
+    ANO = 2016,
+    NIVEL = "UF",
+    CODMUNRES = 23
+  )
+SIDRA_CE = bind_rows(SIDRA_CE_UF, SIDRA_CE_MUN) %>%
+  select(ANO,NIVEL,CODMUNRES,POPRE_T,POPRC_T,POPRC_M,POPRC_F,POPRC_15,
+  POPRC_15_49,POPRC_50,POPRC_F_15,POPRC_F_15_49,POPRC_F_50)
+
 
 # Ao terminar a Tarefa 4 commit com a mensagem "script BDEM - SIDRA - tarefas 1 a 4" e envie para o repositório Projeto_BDEM_2016
 
