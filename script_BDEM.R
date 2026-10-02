@@ -390,10 +390,28 @@ write.table(dados_sinasc_CE, file = "SINASC_CE.csv",sep =";", row.names = FALSE)
 # dados_sidra_3 para população residente censo 2010 - por faixa etária - UF - SIDRA - tabela_1552.csv
 # dados_sidra_4 para população residente censo 2010 - por faixa etária e sexo - municípios - SIDRA - tabela_1552.csv
 # Atenção que agora os arquivos têm nomes e códigos (com 7 dígitos) dos municípios (e alguns UF)
+dados_sidra_1 <- read.csv("população residente estimada - UF e municípios - 2016 - SIDRA - tabela_6579.csv", sep = ";", fileEncoding = "latin1")
+dados_sidra_2=read.csv("população residente censo 2010 - UF e municípios - total e por sexo - SIDRA - tabela_1552.csv",sep=";")
+dados_sidra_3=read.csv("população residente censo 2010 - por faixa etária - UF - SIDRA - tabela_1552.csv",sep=";")
+dados_sidra_4=read.csv("população residente censo 2010 - por faixa etária e sexo - municípios - SIDRA - tabela_1552.csv",sep=";")
 
 # Verificar se a leitura de todos os bancos foi feita corretamente e a estrutura dos dados
-
-
+View(dados_sidra_1)
+View(dados_sidra_2)
+View(dados_sidra_3)
+View(dados_sidra_4)
+dim(dados_sidra_1)
+dim(dados_sidra_2)
+dim(dados_sidra_3)
+dim(dados_sidra_4)
+names(dados_sidra_1)
+names(dados_sidra_2)
+names(dados_sidra_3)
+names(dados_sidra_4)
+str(dados_sidra_1)
+str(dados_sidra_2)
+str(dados_sidra_3)
+str(dados_sidra_4)
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - SIDRA - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
 
