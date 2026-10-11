@@ -626,8 +626,8 @@ ATLAS_MUNICIPIO = data.frame(
   IDHM_CA_M = NA,
   IDHM_CA_F = NA
 )
-ATLAS_UF = rbind(linha_estado, ATLAS_MUNICIPIO)
-View(ATLAS_UF)
+ATLAS_CE = rbind(linha_estado, ATLAS_MUNICIPIO)
+View(ATLAS_CE)
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - ATLAS - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
@@ -635,7 +635,7 @@ View(ATLAS_UF)
 # Tarefa 3. Exportar o banco de dados com o nome ATLAS_UF.csv (Exemplo: ATLAS_RJ.csv)
 # Ao terminar a Tarefa 3 commit com o comentário "dados ATLAS_UF 2016 e script - ATLAS - tarefas 1 a 3"  e envie para o repositório Projeto_BDEM_2016
 
-
+write.table(SIDRA_CE, file = "ATLAS_CE.csv",sep =";", row.names = FALSE)
 
 ####################################
 # ETAPA 5: BANCOS DE DADOS DO SINISA
