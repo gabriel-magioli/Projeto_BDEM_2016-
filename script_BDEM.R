@@ -576,10 +576,62 @@ UF_codigo = data.frame(
 
 # Criar banco final ATLAS_UF "juntando" os bancos linha_estado e ATLAS_MUNICIPIO
 
+UF_codigo = data.frame(
+  UF = c("Rondônia","Acre","Amazonas","Roraima","Pará","Amapá","Tocantins",
+         "Maranhão","Piauí","Ceará","Rio Grande do Norte","Paraíba",
+         "Pernambuco","Alagoas","Sergipe","Bahia","Minas Gerais",
+         "Espírito Santo","Rio de Janeiro","São Paulo","Paraná",
+         "Santa Catarina","Rio Grande do Sul","Mato Grosso do Sul",
+         "Mato Grosso","Goiás","Distrito Federal"),
+  
+  SIGLA = c("RO","AC","AM","RR","PA","AP","TO",
+            "MA","PI","CE","RN","PB","PE","AL",
+            "SE","BA","MG","ES","RJ","SP",
+            "PR","SC","RS","MS","MT","GO","DF"),
+  
+  CODUF = c(11,12,13,14,15,16,17,
+            21,22,23,24,25,26,27,
+            28,29,31,32,33,35,
+            41,42,43,50,51,52,53)
+)
+
+dados_atlas_1 = subset(dados_atlas_1, UF != "Brasil")
+dados_atlas_1 = merge(dados_atlas_1, UF_codigo, by = "UF")
+linha_estado = data.frame(
+  ANO = 2016,
+  NIVEL = "UF",
+  CODMUNRES = dados_atlas_1$CODUF,
+  IDHM_A = dados_atlas_1$IDHM_2016,
+  IDHM_CA = NA,
+  IDHM_CA_M = dados_atlas_1$IDHM_2016_M,
+  IDHM_CA_F = dados_atlas_1$IDHM_2016_F
+)
+linha_estado = subset(linha_estado, CODMUNRES == 23)
+dados_atlas_2$UF = gsub(".*\\((.*)\\).*", "\\1", dados_atlas_2$município)
+dados_atlas_2$município = trimws(gsub("\\s*\\(.*\\)", "", dados_atlas_2$município))
+codigos_IBGE_2010$CODUF = as.numeric(substr(as.character(codigos_IBGE_2010$CODMUNRES), 1, 2))
+codigos_IBGE_2010 = merge(codigos_IBGE_2010, UF_codigo, by = "CODUF")
+atlas_municipio = merge(dados_atlas_2, codigos_IBGE_2010, by.x = c("município", "UF"), by.y = c("município", "SIGLA"))
+if("UF.y" %in% colnames(atlas_municipio)) {
+  atlas_municipio$UF.y = NULL
+}
+
+atlas_municipio = subset(atlas_municipio, floor(CODMUNRES / 100000) == 23)
+ATLAS_MUNICIPIO = data.frame(
+  ANO = 2016,
+  NIVEL = "MUNICIPIO",
+  CODMUNRES = atlas_municipio$CODMUNRES,
+  IDHM_A = NA,
+  IDHM_CA = atlas_municipio$IDHM_2010,
+  IDHM_CA_M = NA,
+  IDHM_CA_F = NA
+)
+ATLAS_UF = rbind(linha_estado, ATLAS_MUNICIPIO)
+View(ATLAS_UF)
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - ATLAS - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
-
+ 
 # Tarefa 3. Exportar o banco de dados com o nome ATLAS_UF.csv (Exemplo: ATLAS_RJ.csv)
 # Ao terminar a Tarefa 3 commit com o comentário "dados ATLAS_UF 2016 e script - ATLAS - tarefas 1 a 3"  e envie para o repositório Projeto_BDEM_2016
 
