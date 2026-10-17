@@ -688,7 +688,7 @@ write.csv2(SINISA_CE, "SINISA_CE.csv", row.names = FALSE, fileEncoding = "latin1
 
 # Tarefa 4. Exportar o banco de dados com o nome SINISA_UF.csv (Exemplo: SINISA_RJ.csv)
 # Ao terminar a Tarefa 4 commit com o comentário "dados SINISA_UF 2016 e script - SINISA - tarefas 1 a 4"  e enviar para o repositório Projeto_BDEM_2016
-
+write.csv2(SINISA_CE, "SINISA_CE.csv", row.names = FALSE, fileEncoding = "latin1")
 
 
 ################################
