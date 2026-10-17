@@ -677,7 +677,12 @@ View(dados_sinisa_1)
 
 
 # Tarefa 3. Criar um banco de dados, de nome SINISA_UF.csv (Exemplo: SINISA_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 3 - SINISA.pdf”
-
+dados_sinisa_1$ANO = dados_sinisa_1$Ano.de.Referência
+dados_sinisa_1$NIVEL = "MUNICIPIO"
+SINISA_CE = dados_sinisa_1[,c("ANO","NIVEL","CODMUNRES","POPR_RA","POPR_RE")]
+head(SINISA_CE)
+View(SINISA_CE)
+write.csv2(SINISA_CE, "SINISA_CE.csv", row.names = FALSE, fileEncoding = "latin1")
 # Ao terminar a Tarefa 3 commit com a mensagem "script BDEM - SINISA - tarefas 1 a 3" e envie para o repositório Projeto_BDEM_2016
 
 
