@@ -650,7 +650,21 @@ write.table(ATLAS_CE, file = "ATLAS_CE.csv",sep =";", row.names = FALSE)
 
 # Verificar se a leitura de todos os bancos foi feita corretamente e a estrutura dos dados
 # Remover a pontuação de milhar e converter para formato numérico
-
+dados_sinisa = read.csv("agua e esgoto - município - 2016.csv", sep = ";", fileEncoding = "latin1")
+View(dados_sinisa)
+head(dados_sinisa)
+str(dados_sinisa)
+dados_sinisa[] <- lapply(dados_sinisa, function(col) {
+  if (is.character(col) || is.factor(col)) {
+    col_limpa <- gsub("\\.", "", as.character(col))
+    col_num <- suppressWarnings(as.numeric(col_limpa))
+    if (!all(is.na(col_num[!is.na(col_limpa) & col_limpa != ""]))) {
+      return(col_num)
+    }
+  }
+  return(col)
+})
+str(dados_sinisa)
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - SINISA - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
 
