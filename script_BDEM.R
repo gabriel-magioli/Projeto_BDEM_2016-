@@ -725,9 +725,11 @@ Sim_ce$CODMUNRES6 = as.character(Sim_ce$CODMUNRES)
 Sinasc_ce$CODMUNRES6 = as.character(Sinasc_ce$CODMUNRES)
 Sidra_ce$CODMUNRES6 = substr(as.character(Sidra_ce$CODMUNRES),1,6)
 atlas_ce$CODMUNRES6 = substr(as.character(atlas_ce$CODMUNRES),1,6)
+sinasc_agregado = aggregate(rep(1, nrow(Sinasc_ce)) ~ CODMUNRES6, data = Sinasc_ce, FUN = sum)
+colnames(sinasc_agregado) = c("CODMUNRES6", "NV")
 
 bdem_ce = merge(Sidra_ce, atlas_ce, by = "CODMUNRES6",all=T)
-bdem_ce = merge(bdem_ce, Sinasc_ce, by = "CODMUNRES6",all=T)
+bdem_ce = merge(bdem_ce, sinasc_agregado, by = "CODMUNRES6",all=T)
 bdem_ce = merge(bdem_ce, Sim_ce, by = "CODMUNRES6",all=T)
 bdem_ce = merge(bdem_ce, Sinisa_ce, by = "CODMUNRES6",all=T)
 
@@ -750,8 +752,18 @@ write.csv2(bdem_ce, "BDEM_CE.csv", row.names=F)
 # Conferir o banco BDEM_UF após inserção dos indicadores
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - BDEM - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
-
-
+bdem_ce$TFG = round((bdem_ce$NV / bdem_ce$POPRC_F_15_49)*1000,2)
+bdem_ce$TMG = round((bdem_ce$TO / bdem_ce$POPRC_T)*1000,2)
+bdem_ce$RMM = round((bdem_ce$TO_MT / bdem_ce$NV)*100000,2)
+bdem_ce$TMM = round((bdem_ce$TO_MT / bdem_ce$POPRC_F_15_49)*100000,2)
+bdem_ce$TMM_P = round((bdem_ce$TO_MT_42 / bdem_ce$POPRC_F_15_49)*100000,2)
+bdem_ce$TMN = round((bdem_ce$TO_NT / bdem_ce$NV)*1000,2)
+bdem_ce$TMN_P = round((bdem_ce$TO_NT_P / bdem_ce$NV)*1000,2)
+bdem_ce$TMN_T = round((bdem_ce$TO_NT_T / bdem_ce$NV)*1000,2)
+bdem_ce$TMI = round((bdem_ce$TO_FT / bdem_ce$NV)*1000,2)
+head(bdem_ce)
+dim(bdem_ce)
+names(bdem_ce)
 # Tarefa 3: Exportar o banco de dados com o nome BDEM_UF.csv (Exemplo: BDEM_RJ.csv)
 # Ao terminar a Tarefa 3 commit com o comentário "dados BDEM_UF 2016 e script - BDEM - tarefas 1 a 3"  e enviar para o repositório Projeto_BDEM_2016
  
