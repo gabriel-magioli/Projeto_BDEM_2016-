@@ -242,6 +242,7 @@ names(dados_sinasc_1)
 # 41: 155066    42: 95313     43: 141411
 # 50: 42432     51: 53531     52: 95563     53: 43340 
 dados_sinasc_2 = dados_sinasc_1[substr(as.character(dados_sinasc_1$CODMUNRES), 1, 2) == "23",]
+dados_sinasc_2$COMPLETO_61 = complete.cases(dados_sinasc[substr(as.character(dados_sinasc$CODMUNRES), 1, 2) == "23", ])
 View(dados_sinasc_2)
 dim(dados_sinasc_2)
 
@@ -366,10 +367,191 @@ dados_sinasc_2$F_PIG = factor(dados_sinasc_2$F_PIG, levels=c("PIG","AIG","GIG"))
 
 # Tarefa 9. Criar um banco de dados, de nome SINASC_UF.csv (Exemplo: SINASC_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 9 - SINASC.pdf”
 # Atenção: a ordem das variáveis do arquivo deve ser respeitada
-colunas_tarefas9 = c("CODMUNNASC","LOCNASC","IDADEMAE","ESTCIVMAE","CODMUNRES","GESTACAO","GRAVIDEZ","PARTO","SEXO","APGAR5","RACACOR","PESO","IDANOMAL","ESCMAE2010"
-,"RACACORMAE","TPAPRESENT","TPROBSON","PARIDADE","KOTELCHUCK","CONTADOR","F_PESO","F_IDADE","F_APGAR5","PEREG","ESTCIV","PESO_P10","PESO_P90","F_PIG")
-dados_sinasc_CE = dados_sinasc_2[, colunas_tarefas9]
-write.table(dados_sinasc_CE, file = "SINASC_CE.csv",sep =";", row.names = FALSE)
+library(dplyr)
+
+# Garantir que as variáveis numéricas estejam como numeric
+dados_sinasc_2 <- dados_sinasc_2 %>%
+  mutate(
+    IDADEMAE = as.numeric(as.character(IDADEMAE)),
+    SEMAGESTAC = as.numeric(as.character(SEMAGESTAC)),
+    PESO = as.numeric(as.character(PESO)),
+    APGAR5 = as.numeric(as.character(APGAR5))
+  )
+
+# Verificar registros completos nas colunas selecionadas (para TNRCR)
+colunas_originais_sel <- c("CODMUNNASC", "LOCNASC", "IDADEMAE", "ESTCIVMAE", "CODMUNRES", 
+                           "GESTACAO", "GRAVIDEZ", "PARTO", "SEXO", "APGAR5", "RACACOR", 
+                           "PESO", "IDANOMAL", "ESCMAE2010", "RACACORMAE", "SEMAGESTAC", 
+                           "TPAPRESENT", "TPROBSON", "PARIDADE", "KOTELCHUCK", "CONTADOR")
+
+dados_sinasc_2$COMPLETO_SEL <- complete.cases(dados_sinasc_2[, colunas_originais_sel])
+
+# Função auxiliar para resumir as 103 variáveis (serve tanto para Municípios quanto para a UF)
+resumir_sinasc <- function(df) {
+  df %>%
+    summarise(
+      # Informações sobre os nascimentos
+      TN = n(),
+      TNRC = sum(COMPLETO_61, na.rm = TRUE),
+      TNRCR = sum(COMPLETO_SEL, na.rm = TRUE),
+      
+      # Informações sobre as gestantes
+      TGI_15 = sum(F_IDADE == "<15", na.rm = TRUE),
+      TGI_15_19 = sum(F_IDADE == "15-19", na.rm = TRUE),
+      TGI_20_24 = sum(F_IDADE == "20-24", na.rm = TRUE),
+      TGI_25_29 = sum(F_IDADE == "25-29", na.rm = TRUE),
+      TGI_30_34 = sum(F_IDADE == "30-34", na.rm = TRUE),
+      TGI_35_39 = sum(F_IDADE == "35-39", na.rm = TRUE),
+      TGI_40_44 = sum(F_IDADE == "40-44", na.rm = TRUE),
+      TGI_45_49 = sum(F_IDADE == "45-49", na.rm = TRUE),
+      TGI_50 = sum(F_IDADE == "50+", na.rm = TRUE),
+      TGIF = sum(IDADEMAE >= 15 & IDADEMAE <= 49, na.rm = TRUE),
+      IM_P25 = round(quantile(IDADEMAE, probs = 0.25, na.rm = TRUE), 2),
+      IM_P50 = round(quantile(IDADEMAE, probs = 0.50, na.rm = TRUE), 2),
+      IM_P75 = round(quantile(IDADEMAE, probs = 0.75, na.rm = TRUE), 2),
+      IM_MD = round(mean(IDADEMAE, na.rm = TRUE), 2),
+      IM_DP = round(sd(IDADEMAE, na.rm = TRUE), 2),
+      
+      EM_S = sum(ESCMAE2010 == "Sem escolaridade", na.rm = TRUE),
+      EM_FI = sum(ESCMAE2010 == "Fundamental I (1ª a 4ª série)", na.rm = TRUE),
+      EM_FII = sum(ESCMAE2010 == "Fundamental II (5ª a 8ª série)", na.rm = TRUE),
+      EM_M = sum(ESCMAE2010 == "Médio (antigo 2º grau)", na.rm = TRUE),
+      EM_SI = sum(ESCMAE2010 == "Superior incompleto", na.rm = TRUE),
+      EM_SC = sum(ESCMAE2010 == "Superior completo", na.rm = TRUE),
+      
+      TGRC_B = sum(RACACORMAE == "Branca", na.rm = TRUE),
+      TGRC_PT = sum(RACACORMAE == "Preta", na.rm = TRUE),
+      TGRC_A = sum(RACACORMAE == "Amarela", na.rm = TRUE),
+      TGRC_PD = sum(RACACORMAE == "Parda", na.rm = TRUE),
+      TGRC_I = sum(RACACORMAE == "Indígena", na.rm = TRUE),
+      
+      TGSC = sum(ESTCIV == "Sem companheiro", na.rm = TRUE),
+      TGCC = sum(ESTCIV == "Com companheiro", na.rm = TRUE),
+      TGPRI = sum(PARIDADE == "Nulípara", na.rm = TRUE),
+      TGNPRI = sum(PARIDADE == "Multípara", na.rm = TRUE),
+      
+      # Informações sobre as gestações
+      TGU = sum(GRAVIDEZ == "Única", na.rm = TRUE),
+      TGG = sum(GRAVIDEZ %in% c("Dupla", "Tríplice e mais"), na.rm = TRUE),
+      TGD_22 = sum(GESTACAO == "Menos de 22 semanas", na.rm = TRUE),
+      TGD_22_27 = sum(GESTACAO == "22 a 27 semanas", na.rm = TRUE),
+      TGD_28_31 = sum(GESTACAO == "28 a 31 semanas", na.rm = TRUE),
+      TGD_32_36 = sum(GESTACAO == "32 a 36 semanas", na.rm = TRUE),
+      TGD_37_41 = sum(GESTACAO == "37 a 41 semanas", na.rm = TRUE),
+      TGD_42 = sum(GESTACAO == "42 semanas e mais", na.rm = TRUE),
+      TGD_PRT = sum(SEMAGESTAC < 37, na.rm = TRUE),
+      TGD_AT = sum(SEMAGESTAC >= 37 & SEMAGESTAC <= 41, na.rm = TRUE),
+      TGD_PST = sum(SEMAGESTAC >= 42, na.rm = TRUE),
+      DG_P25 = round(quantile(SEMAGESTAC, probs = 0.25, na.rm = TRUE), 2),
+      DG_P50 = round(quantile(SEMAGESTAC, probs = 0.50, na.rm = TRUE), 2),
+      DG_P75 = round(quantile(SEMAGESTAC, probs = 0.75, na.rm = TRUE), 2),
+      DG_MD = round(mean(SEMAGESTAC, na.rm = TRUE), 2),
+      DG_DP = round(sd(SEMAGESTAC, na.rm = TRUE), 2),
+      
+      TKC_NR = sum(KOTELCHUCK == "Não realizou pré-natal", na.rm = TRUE),
+      TKC_ID = sum(KOTELCHUCK == "Inadequado", na.rm = TRUE),
+      TKC_IT = sum(KOTELCHUCK == "Intermediário", na.rm = TRUE),
+      TKC_AD = sum(KOTELCHUCK == "Adequado", na.rm = TRUE),
+      TKC_MAD = sum(KOTELCHUCK == "Mais que adequado", na.rm = TRUE),
+      
+      # Informações sobre o parto
+      TGPRG_S = sum(PEREG == "Sim", na.rm = TRUE),
+      TGPRG_N = sum(PEREG == "Não", na.rm = TRUE),
+      TPV = sum(PARTO == "Vaginal", na.rm = TRUE),
+      TPC = sum(PARTO == "Cesário", na.rm = TRUE),
+      TRAP_C = sum(TPAPRESENT == "Cefálico", na.rm = TRUE),
+      TRAP_P = sum(TPAPRESENT == "Pélvica ou podálica", na.rm = TRUE),
+      TRAP_T = sum(TPAPRESENT == "Transversa", na.rm = TRUE),
+      
+      TGROB_1 = sum(TPROBSON == "Grupo 1", na.rm = TRUE),
+      TGROB_2 = sum(TPROBSON == "Grupo 2", na.rm = TRUE),
+      TGROB_3 = sum(TPROBSON == "Grupo 3", na.rm = TRUE),
+      TGROB_4 = sum(TPROBSON == "Grupo 4", na.rm = TRUE),
+      TGROB_5 = sum(TPROBSON == "Grupo 5", na.rm = TRUE),
+      TGROB_6 = sum(TPROBSON == "Grupo 6", na.rm = TRUE),
+      TGROB_7 = sum(TPROBSON == "Grupo 7", na.rm = TRUE),
+      TGROB_8 = sum(TPROBSON == "Grupo 8", na.rm = TRUE),
+      TGROB_9 = sum(TPROBSON == "Grupo 9", na.rm = TRUE),
+      TGROB_10 = sum(TPROBSON == "Grupo 10", na.rm = TRUE),
+      
+      TNLOC_H = sum(LOCNASC == "Hospital", na.rm = TRUE),
+      TNLOC_ES = sum(LOCNASC == "Outros estabelecimentos de saúde", na.rm = TRUE),
+      TNLOC_D = sum(LOCNASC == "Domicílio", na.rm = TRUE),
+      TNLOC_O = sum(LOCNASC == "Outros", na.rm = TRUE),
+      TNLOC_AI = sum(LOCNASC == "Aldeia indígena", na.rm = TRUE),
+      
+      # Informações sobre os recém-nascidos
+      TRS_M = sum(SEXO == "Masculino", na.rm = TRUE),
+      TRS_F = sum(SEXO == "Feminino", na.rm = TRUE),
+      TRRC_B = sum(RACACOR == "Branca", na.rm = TRUE),
+      TRRC_PT = sum(RACACOR == "Preta", na.rm = TRUE),
+      TRRC_A = sum(RACACOR == "Amarela", na.rm = TRUE),
+      TRRC_PD = sum(RACACOR == "Parda", na.rm = TRUE),
+      TRRC_I = sum(RACACOR == "Indígena", na.rm = TRUE),
+      
+      TRP_BP = sum(F_PESO == "Baixo peso", na.rm = TRUE),
+      TRP_N = sum(F_PESO == "Peso normal", na.rm = TRUE),
+      TRP_M = sum(F_PESO == "Macrossomia", na.rm = TRUE),
+      
+      PESO_P25 = round(quantile(PESO, probs = 0.25, na.rm = TRUE), 2),
+      PESO_P50 = round(quantile(PESO, probs = 0.50, na.rm = TRUE), 2),
+      PESO_P75 = round(quantile(PESO, probs = 0.75, na.rm = TRUE), 2),
+      PESO_MD = round(mean(PESO, na.rm = TRUE), 2),
+      PESO_DP = round(sd(PESO, na.rm = TRUE), 2),
+      
+      TRPIG_P = sum(F_PIG == "PIG", na.rm = TRUE),
+      TRPIG_A = sum(F_PIG == "AIG", na.rm = TRUE),
+      TRPIG_G = sum(F_PIG == "GIG", na.rm = TRUE),
+      
+      TRAPG5_B = sum(F_APGAR5 == "Baixo", na.rm = TRUE),
+      TRAPG5_N = sum(F_APGAR5 == "Normal", na.rm = TRUE),
+      APG5_MD = round(mean(APGAR5, na.rm = TRUE), 2),
+      APG5_DP = round(sd(APGAR5, na.rm = TRUE), 2),
+      
+      TRAC = sum(IDANOMAL == "Sim", na.rm = TRUE),
+      TRSAC = sum(IDANOMAL == "Não", na.rm = TRUE)
+    )
+}
+
+# 1. Agregar por Município
+sinasc_mun <- dados_sinasc_2 %>%
+  group_by(CODMUNRES) %>%
+  resumir_sinasc() %>%
+  mutate(ANO = 2016, NIVEL = "MUNICIPIO") %>%
+  ungroup()
+
+# 2. Agregar para o Estado (UF = 23)
+sinasc_uf <- dados_sinasc_2 %>%
+  resumir_sinasc() %>%
+  mutate(ANO = 2016, NIVEL = "UF", CODMUNRES = 23)
+
+# 3. Juntar UF + Municípios e ordenar exatamente nas 103 colunas do PDF
+colunas_tarefas9 <- c(
+  "ANO", "NIVEL", "CODMUNRES", "TN", "TNRC", "TNRCR",
+  "TGI_15", "TGI_15_19", "TGI_20_24", "TGI_25_29", "TGI_30_34", "TGI_35_39", "TGI_40_44", "TGI_45_49", "TGI_50", "TGIF",
+  "IM_P25", "IM_P50", "IM_P75", "IM_MD", "IM_DP",
+  "EM_S", "EM_FI", "EM_FII", "EM_M", "EM_SI", "EM_SC",
+  "TGRC_B", "TGRC_PT", "TGRC_A", "TGRC_PD", "TGRC_I",
+  "TGSC", "TGCC", "TGPRI", "TGNPRI",
+  "TGU", "TGG", "TGD_22", "TGD_22_27", "TGD_28_31", "TGD_32_36", "TGD_37_41", "TGD_42", "TGD_PRT", "TGD_AT", "TGD_PST",
+  "DG_P25", "DG_P50", "DG_P75", "DG_MD", "DG_DP",
+  "TKC_NR", "TKC_ID", "TKC_IT", "TKC_AD", "TKC_MAD",
+  "TGPRG_S", "TGPRG_N", "TPV", "TPC", "TRAP_C", "TRAP_P", "TRAP_T",
+  "TGROB_1", "TGROB_2", "TGROB_3", "TGROB_4", "TGROB_5", "TGROB_6", "TGROB_7", "TGROB_8", "TGROB_9", "TGROB_10",
+  "TNLOC_H", "TNLOC_ES", "TNLOC_D", "TNLOC_O", "TNLOC_AI",
+  "TRS_M", "TRS_F", "TRRC_B", "TRRC_PT", "TRRC_A", "TRRC_PD", "TRRC_I",
+  "TRP_BP", "TRP_N", "TRP_M",
+  "PESO_P25", "PESO_P50", "PESO_P75", "PESO_MD", "PESO_DP",
+  "TRPIG_P", "TRPIG_A", "TRPIG_G",
+  "TRAPG5_B", "TRAPG5_N", "APG5_MD", "APG5_DP",
+  "TRAC", "TRSAC"
+)
+
+dados_sinasc_CE <- bind_rows(sinasc_uf, sinasc_mun) %>%
+  select(all_of(colunas_tarefas9))
+
+View(dados_sinasc_CE)
+dim(dados_sinasc_CE)
 # Ao terminar a Tarefa 9 commit com a mensagem "script BDEM - SINASC - tarefas 1 a 9" e envie para o repositório Projeto_BDEM_2016
 
 
@@ -390,34 +572,116 @@ write.table(dados_sinasc_CE, file = "SINASC_CE.csv",sep =";", row.names = FALSE)
 # dados_sidra_3 para população residente censo 2010 - por faixa etária - UF - SIDRA - tabela_1552.csv
 # dados_sidra_4 para população residente censo 2010 - por faixa etária e sexo - municípios - SIDRA - tabela_1552.csv
 # Atenção que agora os arquivos têm nomes e códigos (com 7 dígitos) dos municípios (e alguns UF)
+dados_sidra_1 <- read.csv("população residente estimada - UF e municípios - 2016 - SIDRA - tabela_6579.csv", sep = ";", fileEncoding = "latin1")
+dados_sidra_2=read.csv("população residente censo 2010 - UF e municípios - total e por sexo - SIDRA - tabela_1552.csv",sep=";")
+dados_sidra_3=read.csv("população residente censo 2010 - por faixa etária - UF - SIDRA - tabela_1552.csv",sep=";")
+dados_sidra_4=read.csv("população residente censo 2010 - por faixa etária e sexo - municípios - SIDRA - tabela_1552.csv",sep=";")
 
 # Verificar se a leitura de todos os bancos foi feita corretamente e a estrutura dos dados
-
-
+View(dados_sidra_1)
+View(dados_sidra_2)
+View(dados_sidra_3)
+View(dados_sidra_4)
+dim(dados_sidra_1)
+dim(dados_sidra_2)
+dim(dados_sidra_3)
+dim(dados_sidra_4)
+names(dados_sidra_1)
+names(dados_sidra_2)
+names(dados_sidra_3)
+names(dados_sidra_4)
+str(dados_sidra_1)
+str(dados_sidra_2)
+str(dados_sidra_3)
+str(dados_sidra_4)
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - SIDRA - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 2. Criar uma nova variável de nome CODUF com os códigos da UF nos bancos dados_sidra_1, dados_sidra_2, dados_sidra_4
-
+dados_sidra_1$CODUF = as.numeric(substr(as.character(dados_sidra_1$CODMUNRES),1,2))
+dados_sidra_2$CODUF = as.numeric(substr(as.character(dados_sidra_2$CODMUNRES),1,2))
+dados_sidra_4$CODUF = as.numeric(substr(as.character(dados_sidra_4$CODMUNRES),1,2))
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - SIDRA - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 3. Selecionar em dados_sidra_ 1 a dados_sidra_4 a UF de responsabilidade do aluno 
 # e chamar os bancos de dados, respectivamente por sidra_1, sidra_2, sidra_3 e sidra_4
+sidra_1 = subset(dados_sidra_1, CODUF == 23)
+sidra_2 = subset(dados_sidra_2, CODUF == 23)
+sidra_4 = subset(dados_sidra_4, CODUF == 23)
 
+if("CODUF" %in% names(dados_sidra_3)){
+  sidra_3 = subset(dados_sidra_3, CODUF == 23)
+} else if ("UF" %in% names(dados_sidra_3)){
+  sidra_3 = subset(dados_sidra_3, UF == 23)
+} else if("CODMUNRES" %in% names(dados_sidra_3)){
+  sidra_3 = subset(dados_sidra_3, CODMUNRES == 23)
+}
+
+head(sidra_1)
+head(sidra_2)
+head(sidra_3)
+head(sidra_4)
 
 # Ao terminar a Tarefa 3 commit com a mensagem "script BDEM - SIDRA - tarefas 1 a 3" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 4: Criar um banco de dados, de nome SIDRA_UF.csv (Exemplo: SIDRA_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 4 - SIDRA.pdf”
+library(dplyr)
+df_1 = sidra_1 %>%
+  select(CODMUNRES, POPRE_T) %>%
+  mutate(POPRE_T = as.numeric(POPRE_T))
+
+df_2 = sidra_2 %>%
+  select(CODMUNRES, POPRC_T, POPRC_M, POPRC_F) %>%
+  mutate(POPRC_T = as.numeric(POPRC_T),
+         POPRC_M = as.numeric(POPRC_M),    
+         POPRC_F = as.numeric(POPRC_F)
+)
+df_4 = sidra_4 %>%
+  mutate(
+  POP = as.numeric(POP),
+  POPF = as.numeric(POPF)
+  ) %>%
+  group_by(CODMUNRES) %>%
+  summarise(
+    POPRC_15 = sum(POP[F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos")], na.rm = TRUE),
+    POPRC_15_49 = sum(POP[F_IDADE %in% c("15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE),
+    POPRC_50 = sum(POP[!F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos","15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE),
+    POPRC_F_15 = sum(POPF[F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos")], na.rm = TRUE ),
+    POPRC_F_15_49 = sum(POPF[F_IDADE %in% c("15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE),
+    POPRC_F_50 = sum(POPF[!F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos","15 a 19 anos", "20 a 24 anos","25 a 29 anos", "30 a 34 anos", "35 a 39 anos","40 a 44 anos", "45 a 49 anos")], na.rm = TRUE)
+)
+SIDRA_CE_MUN = df_1 %>%
+  left_join(df_2, by = "CODMUNRES") %>%
+  left_join(df_4, by = "CODMUNRES") %>%
+  mutate(
+    ANO = 2016,
+    NIVEL = "MUNICIPIO"
+  )
+SIDRA_CE_UF = SIDRA_CE_MUN %>%
+  summarise(
+    across(c(POPRE_T,POPRC_T,POPRC_M,POPRC_F,POPRC_15,
+    POPRC_15_49,POPRC_50,POPRC_F_15,POPRC_F_15_49,POPRC_F_50),
+    ~ sum(.x,na.rm=TRUE))
+  ) %>%
+  mutate(
+    ANO = 2016,
+    NIVEL = "UF",
+    CODMUNRES = 23
+  )
+SIDRA_CE = bind_rows(SIDRA_CE_UF, SIDRA_CE_MUN) %>%
+  select(ANO,NIVEL,CODMUNRES,POPRE_T,POPRC_T,POPRC_M,POPRC_F,POPRC_15,
+  POPRC_15_49,POPRC_50,POPRC_F_15,POPRC_F_15_49,POPRC_F_50)
+
 
 # Ao terminar a Tarefa 4 commit com a mensagem "script BDEM - SIDRA - tarefas 1 a 4" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 5:Exportar o banco de dados com o nome SIDRA_UF.csv (Exemplo: SIDRA_RJ.csv)
 # Ao terminar a Tarefa 5 commit com o comentário "dados SIDRA_UF 2016 e script - SIDRA - tarefas 1 a 5"  e envie para o repositório Projeto_BDEM_2016
-
+write.table(SIDRA_CE, file = "SIDRA_CE.csv",sep =";", row.names = FALSE)
 
 ####################################
 # ETAPA 4: BANCOS DE DADOS DO ATLAS
@@ -432,6 +696,15 @@ write.table(dados_sinasc_CE, file = "SINASC_CE.csv",sep =";", row.names = FALSE)
 # Atenção que agora alguns arquivos só têm os nomes dos municípios e das UFs, mas não têm os códigos
 
 # Verificar se a leitura de todos os bancos foi feita corretamente e a estrutura dos dados
+codigos_IBGE_2010 = read.csv("códigos dos municípios - 2010.csv", sep = ";")
+dados_atlas_1 = read.csv("IDHM - 2010 (CENSO) e 2016 (PNAD) - total e por sexo - UF - Atlas Brasil.csv", sep = ";" ,fileEncoding = "latin1")
+dados_atlas_2 = read.csv("IDHM - 2010 - municípios - Atlas Brasil.csv", sep = ";")
+View(codigos_IBGE_2010)
+View(dados_atlas_1)
+View(dados_atlas_2)
+dim(codigos_IBGE_2010)
+dim(dados_atlas_1)
+dim(dados_atlas_2)
 
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - ATLAS - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
@@ -485,14 +758,66 @@ UF_codigo = data.frame(
 
 # Criar banco final ATLAS_UF "juntando" os bancos linha_estado e ATLAS_MUNICIPIO
 
+UF_codigo = data.frame(
+  UF = c("Rondônia","Acre","Amazonas","Roraima","Pará","Amapá","Tocantins",
+         "Maranhão","Piauí","Ceará","Rio Grande do Norte","Paraíba",
+         "Pernambuco","Alagoas","Sergipe","Bahia","Minas Gerais",
+         "Espírito Santo","Rio de Janeiro","São Paulo","Paraná",
+         "Santa Catarina","Rio Grande do Sul","Mato Grosso do Sul",
+         "Mato Grosso","Goiás","Distrito Federal"),
+  
+  SIGLA = c("RO","AC","AM","RR","PA","AP","TO",
+            "MA","PI","CE","RN","PB","PE","AL",
+            "SE","BA","MG","ES","RJ","SP",
+            "PR","SC","RS","MS","MT","GO","DF"),
+  
+  CODUF = c(11,12,13,14,15,16,17,
+            21,22,23,24,25,26,27,
+            28,29,31,32,33,35,
+            41,42,43,50,51,52,53)
+)
+
+dados_atlas_1 = subset(dados_atlas_1, UF != "Brasil")
+dados_atlas_1 = merge(dados_atlas_1, UF_codigo, by = "UF")
+linha_estado = data.frame(
+  ANO = 2016,
+  NIVEL = "UF",
+  CODMUNRES = dados_atlas_1$CODUF,
+  IDHM_A = dados_atlas_1$IDHM_2016,
+  IDHM_CA = NA,
+  IDHM_CA_M = dados_atlas_1$IDHM_2016_M,
+  IDHM_CA_F = dados_atlas_1$IDHM_2016_F
+)
+linha_estado = subset(linha_estado, CODMUNRES == 23)
+dados_atlas_2$UF = gsub(".*\\((.*)\\).*", "\\1", dados_atlas_2$município)
+dados_atlas_2$município = trimws(gsub("\\s*\\(.*\\)", "", dados_atlas_2$município))
+codigos_IBGE_2010$CODUF = as.numeric(substr(as.character(codigos_IBGE_2010$CODMUNRES), 1, 2))
+codigos_IBGE_2010 = merge(codigos_IBGE_2010, UF_codigo, by = "CODUF")
+atlas_municipio = merge(dados_atlas_2, codigos_IBGE_2010, by.x = c("município", "UF"), by.y = c("município", "SIGLA"))
+if("UF.y" %in% colnames(atlas_municipio)) {
+  atlas_municipio$UF.y = NULL
+}
+
+atlas_municipio = subset(atlas_municipio, floor(CODMUNRES / 100000) == 23)
+ATLAS_MUNICIPIO = data.frame(
+  ANO = 2016,
+  NIVEL = "MUNICIPIO",
+  CODMUNRES = atlas_municipio$CODMUNRES,
+  IDHM_A = NA,
+  IDHM_CA = atlas_municipio$IDHM_2010,
+  IDHM_CA_M = NA,
+  IDHM_CA_F = NA
+)
+ATLAS_CE = rbind(linha_estado, ATLAS_MUNICIPIO)
+View(ATLAS_CE)
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - ATLAS - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
-
+ 
 # Tarefa 3. Exportar o banco de dados com o nome ATLAS_UF.csv (Exemplo: ATLAS_RJ.csv)
 # Ao terminar a Tarefa 3 commit com o comentário "dados ATLAS_UF 2016 e script - ATLAS - tarefas 1 a 3"  e envie para o repositório Projeto_BDEM_2016
 
-
+write.table(ATLAS_CE, file = "ATLAS_CE.csv",sep =";", row.names = FALSE)
 
 ####################################
 # ETAPA 5: BANCOS DE DADOS DO SINISA
@@ -507,23 +832,45 @@ UF_codigo = data.frame(
 
 # Verificar se a leitura de todos os bancos foi feita corretamente e a estrutura dos dados
 # Remover a pontuação de milhar e converter para formato numérico
-
+dados_sinisa = read.csv("agua e esgoto - município - 2016.csv", sep = ";", fileEncoding = "latin1")
+View(dados_sinisa)
+head(dados_sinisa)
+str(dados_sinisa)
+dados_sinisa[] <- lapply(dados_sinisa, function(col) {
+  if (is.character(col) || is.factor(col)) {
+    col_limpa <- gsub("\\.", "", as.character(col))
+    col_num <- suppressWarnings(as.numeric(col_limpa))
+    if (!all(is.na(col_num[!is.na(col_limpa) & col_limpa != ""]))) {
+      return(col_num)
+    }
+  }
+  return(col)
+})
+str(dados_sinisa)
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - SINISA - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 2. Reduzir dados_sinisa apenas para o estado que o aluno irá trabalhar (utilizar os dois primeiros dígitos de CODMUNRES), nomeando este novo banco de dados como dados_sinisa_1
-
+dados_sinisa_1 = dados_sinisa[substr(as.character(dados_sinisa$CODMUNRES),1,2) == "23",]
+dim(dados_sinisa_1)
+head(dados_sinisa_1)
+View(dados_sinisa_1)
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - SINISA - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 3. Criar um banco de dados, de nome SINISA_UF.csv (Exemplo: SINISA_RJ.csv), contendo as variáveis listadas no arquivo “Variáveis - Projeto - Tarefa 3 - SINISA.pdf”
-
+dados_sinisa_1$ANO = dados_sinisa_1$Ano.de.Referência
+dados_sinisa_1$NIVEL = "MUNICIPIO"
+SINISA_CE = dados_sinisa_1[,c("ANO","NIVEL","CODMUNRES","POPR_RA","POPR_RE")]
+head(SINISA_CE)
+View(SINISA_CE)
+write.csv2(SINISA_CE, "SINISA_CE.csv", row.names = FALSE, fileEncoding = "latin1")
 # Ao terminar a Tarefa 3 commit com a mensagem "script BDEM - SINISA - tarefas 1 a 3" e envie para o repositório Projeto_BDEM_2016
 
 
 # Tarefa 4. Exportar o banco de dados com o nome SINISA_UF.csv (Exemplo: SINISA_RJ.csv)
 # Ao terminar a Tarefa 4 commit com o comentário "dados SINISA_UF 2016 e script - SINISA - tarefas 1 a 4"  e enviar para o repositório Projeto_BDEM_2016
-
+write.csv2(SINISA_CE, "SINISA_CE.csv", row.names = FALSE, fileEncoding = "latin1")
 
 
 ################################
@@ -539,7 +886,36 @@ UF_codigo = data.frame(
 # Agregação dos bancos
 # Lembre-se que SIDRA e ATLAS tem CODMUNRES com 7 dígitos e SINASC, SIM e SINISA com 6 dígitos
 # Além disso dentro do merge all = TRUE garante a manutenção de qualquer município presente em um dos bancos envolvidos no merge
+Sidra_ce = read.csv2("SIDRA_CE.csv",stringsAsFactors = F)
+atlas_ce = read.csv2("ATLAS_CE.csv",stringsAsFactors = F)
+Sinasc_ce = read.csv2("SINASC_CE.csv",stringsAsFactors = F)
+Sim_ce = read.csv2("SIM_CE.csv",stringsAsFactors = F)
+Sinisa_ce = read.csv2("SINISA_CE.csv",stringsAsFactors = F)
+View(Sidra_ce)
+View(atlas_ce)
+View(Sinasc_ce)
+View(Sim_ce)
+View(Sinisa_ce)
+dim(Sidra_ce)
+dim(atlas_ce)
+dim(Sinasc_ce)
+dim(Sinisa_ce)
+dim(Sim_ce)
 
+Sinisa_ce$CODMUNRES6 = as.character(Sinisa_ce$CODMUNRES)
+Sim_ce$CODMUNRES6 = as.character(Sim_ce$CODMUNRES)
+Sinasc_ce$CODMUNRES6 = as.character(Sinasc_ce$CODMUNRES)
+Sidra_ce$CODMUNRES6 = substr(as.character(Sidra_ce$CODMUNRES),1,6)
+atlas_ce$CODMUNRES6 = substr(as.character(atlas_ce$CODMUNRES),1,6)
+sinasc_agregado = aggregate(rep(1, nrow(Sinasc_ce)) ~ CODMUNRES6, data = Sinasc_ce, FUN = sum)
+colnames(sinasc_agregado) = c("CODMUNRES6", "NV")
+
+bdem_ce = merge(Sidra_ce, atlas_ce, by = "CODMUNRES6",all=T)
+bdem_ce = merge(bdem_ce, sinasc_agregado, by = "CODMUNRES6",all=T)
+bdem_ce = merge(bdem_ce, Sim_ce, by = "CODMUNRES6",all=T)
+bdem_ce = merge(bdem_ce, Sinisa_ce, by = "CODMUNRES6",all=T)
+
+write.csv2(bdem_ce, "BDEM_CE.csv", row.names=F)
 
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - BDEM - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
@@ -558,8 +934,19 @@ UF_codigo = data.frame(
 # Conferir o banco BDEM_UF após inserção dos indicadores
 
 # Ao terminar a Tarefa 2 commit com a mensagem "script BDEM - BDEM - tarefas 1 a 2" e envie para o repositório Projeto_BDEM_2016
-
-
+bdem_ce$TFG = round((bdem_ce$NV / bdem_ce$POPRC_F_15_49)*1000,2)
+bdem_ce$TMG = round((bdem_ce$TO / bdem_ce$POPRC_T)*1000,2)
+bdem_ce$RMM = round((bdem_ce$TO_MT / bdem_ce$NV)*100000,2)
+bdem_ce$TMM = round((bdem_ce$TO_MT / bdem_ce$POPRC_F_15_49)*100000,2)
+bdem_ce$TMM_P = round((bdem_ce$TO_MT_42 / bdem_ce$POPRC_F_15_49)*100000,2)
+bdem_ce$TMN = round((bdem_ce$TO_NT / bdem_ce$NV)*1000,2)
+bdem_ce$TMN_P = round((bdem_ce$TO_NT_P / bdem_ce$NV)*1000,2)
+bdem_ce$TMN_T = round((bdem_ce$TO_NT_T / bdem_ce$NV)*1000,2)
+bdem_ce$TMI = round((bdem_ce$TO_FT / bdem_ce$NV)*1000,2)
+head(bdem_ce)
+dim(bdem_ce)
+names(bdem_ce)
 # Tarefa 3: Exportar o banco de dados com o nome BDEM_UF.csv (Exemplo: BDEM_RJ.csv)
 # Ao terminar a Tarefa 3 commit com o comentário "dados BDEM_UF 2016 e script - BDEM - tarefas 1 a 3"  e enviar para o repositório Projeto_BDEM_2016
- 
+write.csv2(bdem_ce, "BDEM_CE.csv", row.names=F)
+BDEM = read.csv2("BDEM_CE.csv",stringsAsFactors = F)
