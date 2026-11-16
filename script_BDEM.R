@@ -886,36 +886,28 @@ write.csv2(SINISA_CE, "SINISA_CE.csv", row.names = FALSE, fileEncoding = "latin1
 # Agregação dos bancos
 # Lembre-se que SIDRA e ATLAS tem CODMUNRES com 7 dígitos e SINASC, SIM e SINISA com 6 dígitos
 # Além disso dentro do merge all = TRUE garante a manutenção de qualquer município presente em um dos bancos envolvidos no merge
-Sidra_ce = read.csv2("SIDRA_CE.csv",stringsAsFactors = F)
-atlas_ce = read.csv2("ATLAS_CE.csv",stringsAsFactors = F)
-Sinasc_ce = read.csv2("SINASC_CE.csv",stringsAsFactors = F)
-Sim_ce = read.csv2("SIM_CE.csv",stringsAsFactors = F)
-Sinisa_ce = read.csv2("SINISA_CE.csv",stringsAsFactors = F)
-View(Sidra_ce)
-View(atlas_ce)
-View(Sinasc_ce)
-View(Sim_ce)
-View(Sinisa_ce)
-dim(Sidra_ce)
-dim(atlas_ce)
-dim(Sinasc_ce)
-dim(Sinisa_ce)
-dim(Sim_ce)
+Sidra_ce = read.csv2("SIDRA_CE.csv", stringsAsFactors = F)
+atlas_ce = read.csv2("ATLAS_CE.csv", stringsAsFactors = F)
+Sinasc_ce = read.csv2("SINASC_CE.csv", stringsAsFactors = F)
+Sim_ce = read.csv2("SIM_CE.csv", stringsAsFactors = F)
+Sinisa_ce = read.csv2("SINISA_CE.csv", stringsAsFactors = F)
 
 Sinisa_ce$CODMUNRES6 = as.character(Sinisa_ce$CODMUNRES)
 Sim_ce$CODMUNRES6 = as.character(Sim_ce$CODMUNRES)
 Sinasc_ce$CODMUNRES6 = as.character(Sinasc_ce$CODMUNRES)
-Sidra_ce$CODMUNRES6 = substr(as.character(Sidra_ce$CODMUNRES),1,6)
-atlas_ce$CODMUNRES6 = substr(as.character(atlas_ce$CODMUNRES),1,6)
-sinasc_agregado = aggregate(rep(1, nrow(Sinasc_ce)) ~ CODMUNRES6, data = Sinasc_ce, FUN = sum)
-colnames(sinasc_agregado) = c("CODMUNRES6", "NV")
+Sidra_ce$CODMUNRES6 = substr(as.character(Sidra_ce$CODMUNRES), 1, 6)
+atlas_ce$CODMUNRES6 = substr(as.character(atlas_ce$CODMUNRES), 1, 6)
 
-bdem_ce = merge(Sidra_ce, atlas_ce, by = "CODMUNRES6",all=T)
-bdem_ce = merge(bdem_ce, sinasc_agregado, by = "CODMUNRES6",all=T)
-bdem_ce = merge(bdem_ce, Sim_ce, by = "CODMUNRES6",all=T)
-bdem_ce = merge(bdem_ce, Sinisa_ce, by = "CODMUNRES6",all=T)
+Sinasc_ce$NV = Sinasc_ce$TN
 
-write.csv2(bdem_ce, "BDEM_CE.csv", row.names=F)
+cols_dup <- c("ANO", "NIVEL", "CODMUNRES")
+
+bdem_ce = merge(Sidra_ce, atlas_ce[, !names(atlas_ce) %in% cols_dup], by = "CODMUNRES6", all = T)
+bdem_ce = merge(bdem_ce, Sinasc_ce[, !names(Sinasc_ce) %in% cols_dup], by = "CODMUNRES6", all = T)
+bdem_ce = merge(bdem_ce, Sim_ce[, !names(Sim_ce) %in% cols_dup], by = "CODMUNRES6", all = T)
+bdem_ce = merge(bdem_ce, Sinisa_ce[, !names(Sinisa_ce) %in% cols_dup], by = "CODMUNRES6", all = T)
+
+write.csv2(bdem_ce, "BDEM_CE.csv", row.names = F)
 
 # Ao terminar a Tarefa 1 commit com a mensagem "script BDEM - BDEM - tarefa 1" e envie para o repositório Projeto_BDEM_2016
 
